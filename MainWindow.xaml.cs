@@ -4,6 +4,7 @@ using Microsoft.Win32; // Für OpenFileDialog
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Globalization;
 using System.Linq; // WICHTIG für das Filtern
 using System.Windows;
 using System.Windows.Controls;
@@ -22,6 +23,20 @@ namespace Facebook_Assistent
         // Merkt sich die ID des Posts, der gerade bearbeitet wird.
         // -1 bedeutet: Wir erstellen gerade einen komplett neuen Post.
         private int _editingPostId = -1;
+
+        private class StatsPostRow
+        {
+            public int Rank { get; set; }
+            public string Headline { get; set; }
+            public string PublishedDisplay { get; set; }
+            public int Likes { get; set; }
+            public int Comments { get; set; }
+            public int Shares { get; set; }
+            public int Interactions { get; set; }
+            public int EngagementScore { get; set; }
+            public string InteractionsPerDay { get; set; }
+            public int DaysOnline { get; set; }
+        }
 
         public MainWindow()
         {
@@ -619,22 +634,99 @@ namespace Facebook_Assistent
         // Hilfsmethode, um die UI-Elemente in Tab 4 zu füllen
         private void UpdateStatisticsUI()
         {
-            // Daten neu laden
             var allPosts = DatabaseHelper.GetPosts();
-            var publishedPosts = allPosts.Where(p => p.Status == 1).ToList();
+            var publishedPosts = allPosts
+                .Where(p => p.Status == 1)
+                .ToList();
 
-            // Summen berechnen
             int totalLikes = publishedPosts.Sum(p => p.LikesCount);
             int totalComments = publishedPosts.Sum(p => p.CommentsCount);
             int totalShares = publishedPosts.Sum(p => p.SharesCount);
+            int totalInteractions = totalLikes + totalComments + totalShares;
 
-            // KPI Cards füllen
             lblTotalLikes.Text = totalLikes.ToString();
             lblTotalComments.Text = totalComments.ToString();
             lblTotalShares.Text = totalShares.ToString();
+            lblTotalInteractions.Text = totalInteractions.ToString();
+            lblPublishedPosts.Text = publishedPosts.Count.ToString();
+            lblDraftPosts.Text = allPosts.Count(p => p.Status == 0).ToString();
 
-            // Tabelle füllen
-            gridStats.ItemsSource = publishedPosts;
+            double avgInteractions = publishedPosts.Count > 0
+                ? (double)totalInteractions / publishedPosts.Count
+                : 0;
+            lblAvgInteractions.Text = avgInteractions.ToString("0.0", CultureInfo.InvariantCulture);
+
+            var rankedPosts = publishedPosts
+                .Select(p =>
+                {
+                    int interactions = p.LikesCount + p.CommentsCount + p.SharesCount;
+                    int score = p.LikesCount + (p.CommentsCount * 2) + (p.SharesCount * 3);
+                    int daysOnline = 0;
+
+                    if (p.PublishedDate.HasValue)
+                    {
+                        daysOnline = Math.Max(1, (int)Math.Ceiling((DateTime.Now - p.PublishedDate.Value).TotalDays));
+                    }
+
+                    string interactionsPerDay = daysOnline > 0
+                        ? (interactions / (double)daysOnline).ToString("0.00", CultureInfo.InvariantCulture)
+                        : "-";
+
+                    return new
+                    {
+                        Post = p,
+                        Interactions = interactions,
+                        Score = score,
+                        DaysOnline = daysOnline,
+                        InteractionsPerDay = interactionsPerDay
+                    };
+                })
+                .OrderByDescending(x => x.Score)
+                .ThenByDescending(x => x.Interactions)
+                .ToList();
+
+            if (rankedPosts.Any())
+            {
+                var topPost = rankedPosts.First();
+                lblTopPostHeadline.Text = topPost.Post.Headline;
+                lblTopPostScore.Text = $"Score: {topPost.Score} | Interaktionen: {topPost.Interactions}";
+            }
+            else
+            {
+                lblTopPostHeadline.Text = "-";
+                lblTopPostScore.Text = "Score: 0";
+            }
+
+            DateTime now = DateTime.Now;
+            var posts7 = publishedPosts.Where(p => p.PublishedDate.HasValue && p.PublishedDate.Value >= now.AddDays(-7)).ToList();
+            var posts30 = publishedPosts.Where(p => p.PublishedDate.HasValue && p.PublishedDate.Value >= now.AddDays(-30)).ToList();
+
+            int interactions7 = posts7.Sum(p => p.LikesCount + p.CommentsCount + p.SharesCount);
+            int interactions30 = posts30.Sum(p => p.LikesCount + p.CommentsCount + p.SharesCount);
+
+            lblLast7Days.Text = $"{posts7.Count} Posts | {interactions7} Interaktionen";
+            lblLast30Days.Text = $"{posts30.Count} Posts | {interactions30} Interaktionen";
+
+            int syncedPosts = publishedPosts.Count(p => !string.IsNullOrWhiteSpace(p.FacebookPostId));
+            lblDataQuality.Text = $"{syncedPosts}/{publishedPosts.Count} veröffentlichten Posts mit FB-ID verknüpft";
+
+            var rows = rankedPosts
+                .Select((x, index) => new StatsPostRow
+                {
+                    Rank = index + 1,
+                    Headline = x.Post.Headline,
+                    PublishedDisplay = x.Post.PublishedDate?.ToString("dd.MM.yyyy") ?? "-",
+                    Likes = x.Post.LikesCount,
+                    Comments = x.Post.CommentsCount,
+                    Shares = x.Post.SharesCount,
+                    Interactions = x.Interactions,
+                    EngagementScore = x.Score,
+                    InteractionsPerDay = x.InteractionsPerDay,
+                    DaysOnline = x.DaysOnline
+                })
+                .ToList();
+
+            gridStats.ItemsSource = rows;
         }
     }
 }
