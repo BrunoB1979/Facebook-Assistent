@@ -103,10 +103,10 @@ namespace Facebook_Assistent.Services
             }
         }
 
-        public static async Task<(int likes, int comments)> GetPostStatistics(string fbPostId, string accessToken)
+        public static async Task<(int likes, int comments, int shares)> GetPostStatistics(string fbPostId, string accessToken)
         {
             // Wir nutzen "summary(true)", um die Gesamtzahl zu bekommen
-            string url = $"https://graph.facebook.com/{fbPostId}?fields=likes.summary(true),comments.summary(true)&access_token={accessToken}";
+            string url = $"https://graph.facebook.com/{fbPostId}?fields=likes.summary(true),comments.summary(true),shares&access_token={accessToken}";
 
             try
             {
@@ -116,7 +116,7 @@ namespace Facebook_Assistent.Services
                 if (!response.IsSuccessStatusCode)
                 {
                     // Falls der Post gelöscht wurde oder Token ungültig ist, geben wir -1 zurück
-                    return (-1, -1);
+                    return (-1, -1, -1);
                 }
 
                 var data = JObject.Parse(jsonResponse);
@@ -134,11 +134,17 @@ namespace Facebook_Assistent.Services
                     comments = (int)data["comments"]["summary"]["total_count"];
                 }
 
-                return (likes, comments);
+                int shares = 0;
+                if (data["shares"] != null && data["shares"]["count"] != null)
+                {
+                    shares = (int)data["shares"]["count"];
+                }
+
+                return (likes, comments, shares);
             }
             catch
             {
-                return (0, 0); // Bei Fehler einfach 0 annehmen
+                return (0, 0, 0); // Bei Fehler einfach 0 annehmen
             }
         }
     }

@@ -174,36 +174,101 @@
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
-                        <Border Background="#E7F3FF" Width="200" Padding="15" CornerRadius="10" Margin="10">
+                    <WrapPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,15">
+                        <Border Background="#E7F3FF" Width="190" Padding="12" CornerRadius="10" Margin="6">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock Text="Total Likes" FontSize="14" Foreground="Gray"/>
-                                <TextBlock x:Name="lblTotalLikes" Text="0" FontSize="32" FontWeight="Bold" Foreground="#1877F2"/>
+                                <TextBlock Text="Total Likes" FontSize="13" Foreground="Gray"/>
+                                <TextBlock x:Name="lblTotalLikes" Text="0" FontSize="28" FontWeight="Bold" Foreground="#1877F2"/>
                             </StackPanel>
                         </Border>
-                        <Border Background="#E7F3FF" Width="200" Padding="15" CornerRadius="10" Margin="10">
+                        <Border Background="#E7F3FF" Width="190" Padding="12" CornerRadius="10" Margin="6">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock Text="Total Kommentare" FontSize="14" Foreground="Gray"/>
-                                <TextBlock x:Name="lblTotalComments" Text="0" FontSize="32" FontWeight="Bold" Foreground="#1877F2"/>
+                                <TextBlock Text="Total Kommentare" FontSize="13" Foreground="Gray"/>
+                                <TextBlock x:Name="lblTotalComments" Text="0" FontSize="28" FontWeight="Bold" Foreground="#1877F2"/>
                             </StackPanel>
                         </Border>
-                    </StackPanel>
+                        <Border Background="#E7F3FF" Width="190" Padding="12" CornerRadius="10" Margin="6">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="Total Geteilt" FontSize="13" Foreground="Gray"/>
+                                <TextBlock x:Name="lblTotalShares" Text="0" FontSize="28" FontWeight="Bold" Foreground="#1877F2"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#E7F3FF" Width="190" Padding="12" CornerRadius="10" Margin="6">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="Interaktionen gesamt" FontSize="13" Foreground="Gray"/>
+                                <TextBlock x:Name="lblTotalInteractions" Text="0" FontSize="28" FontWeight="Bold" Foreground="#1877F2"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#F4F8E9" Width="190" Padding="12" CornerRadius="10" Margin="6">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="Veröffentlichte Posts" FontSize="13" Foreground="Gray"/>
+                                <TextBlock x:Name="lblPublishedPosts" Text="0" FontSize="28" FontWeight="Bold" Foreground="#2E7D32"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#FFF7E8" Width="190" Padding="12" CornerRadius="10" Margin="6">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="Entwürfe" FontSize="13" Foreground="Gray"/>
+                                <TextBlock x:Name="lblDraftPosts" Text="0" FontSize="28" FontWeight="Bold" Foreground="#EF6C00"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#F3E8FF" Width="190" Padding="12" CornerRadius="10" Margin="6">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="Ø Interaktionen / Post" FontSize="13" Foreground="Gray"/>
+                                <TextBlock x:Name="lblAvgInteractions" Text="0" FontSize="28" FontWeight="Bold" Foreground="#7B1FA2"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#E8F6FF" Width="260" Padding="12" CornerRadius="10" Margin="6">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="Top-Beitrag (nach Score)" FontSize="13" Foreground="Gray"/>
+                                <TextBlock x:Name="lblTopPostHeadline" Text="-" FontSize="14" FontWeight="Bold" Foreground="#0D47A1" TextAlignment="Center" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="lblTopPostScore" Text="Score: 0" FontSize="13" Foreground="#0D47A1"/>
+                            </StackPanel>
+                        </Border>
+                    </WrapPanel>
 
-                    <Label Grid.Row="1" Content="Details veröffentlichter Beiträge:" FontWeight="Bold" VerticalAlignment="Top"/>
-                    <DataGrid x:Name="gridStats" Grid.Row="1" Margin="0,30,0,0" AutoGenerateColumns="False" IsReadOnly="True">
+                    <Border Grid.Row="1" Background="#F9FAFC" BorderBrush="#DDE3EA" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="6,0">
+                                <TextBlock Text="Letzte 7 Tage" FontWeight="Bold"/>
+                                <TextBlock x:Name="lblLast7Days" Text="Noch keine Daten" Foreground="#37474F"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="6,0">
+                                <TextBlock Text="Letzte 30 Tage" FontWeight="Bold"/>
+                                <TextBlock x:Name="lblLast30Days" Text="Noch keine Daten" Foreground="#37474F"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Margin="6,0">
+                                <TextBlock Text="Datenqualität" FontWeight="Bold"/>
+                                <TextBlock x:Name="lblDataQuality" Text="Noch keine Daten" Foreground="#37474F"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <DataGrid x:Name="gridStats" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
                         <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding Rank}" Width="45"/>
                             <DataGridTextColumn Header="Headline" Binding="{Binding Headline}" Width="*"/>
-                            <DataGridTextColumn Header="Veröffentlicht am" Binding="{Binding PublishedDate}" Width="150"/>
-                            <DataGridTextColumn Header="Likes" Binding="{Binding LikesCount}" Width="80"/>
-                            <DataGridTextColumn Header="Kommentare" Binding="{Binding CommentsCount}" Width="100"/>
+                            <DataGridTextColumn Header="Veröffentlicht" Binding="{Binding PublishedDisplay}" Width="125"/>
+                            <DataGridTextColumn Header="Likes" Binding="{Binding Likes}" Width="70"/>
+                            <DataGridTextColumn Header="Kommentare" Binding="{Binding Comments}" Width="90"/>
+                            <DataGridTextColumn Header="Shares" Binding="{Binding Shares}" Width="70"/>
+                            <DataGridTextColumn Header="Interaktionen" Binding="{Binding Interactions}" Width="95"/>
+                            <DataGridTextColumn Header="Score" Binding="{Binding EngagementScore}" Width="80"/>
+                            <DataGridTextColumn Header="Interaktionen/Tag" Binding="{Binding InteractionsPerDay}" Width="120"/>
+                            <DataGridTextColumn Header="Tage online" Binding="{Binding DaysOnline}" Width="90"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <Button x:Name="btnRefreshStats" Grid.Row="2" Content="🔄 Live-Daten von Facebook abrufen" Height="40" Margin="0,10" Click="btnRefreshStats_Click"/>
+                    <Button x:Name="btnRefreshStats" Grid.Row="3" Content="🔄 Live-Daten von Facebook abrufen" Height="40" Margin="0,10,0,0" Click="btnRefreshStats_Click"/>
                 </Grid>
             </TabItem>
 

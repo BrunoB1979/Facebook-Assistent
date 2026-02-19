@@ -56,9 +56,12 @@ namespace Facebook_Assistent.Services
                         FacebookPostId TEXT,
                         PublishedDate TEXT,
                         LikesCount INTEGER DEFAULT 0,
-                        CommentsCount INTEGER DEFAULT 0
+                        CommentsCount INTEGER DEFAULT 0,
+                        SharesCount INTEGER DEFAULT 0
                     );";
                 ExecuteCommand(sqlPosts, conn);
+
+                EnsureColumnExists(conn, "Posts", "SharesCount", "INTEGER DEFAULT 0");
             }
         }
 
@@ -112,8 +115,8 @@ namespace Facebook_Assistent.Services
             {
                 conn.Open();
                 string sql = @"
-            INSERT INTO Posts (Headline, FullText, ImagePath, Status, PublishedDate, LikesCount, CommentsCount)
-            VALUES (@headline, @fullText, @imagePath, @status, @publishedDate, 0, 0)";
+            INSERT INTO Posts (Headline, FullText, ImagePath, Status, PublishedDate, LikesCount, CommentsCount, SharesCount)
+            VALUES (@headline, @fullText, @imagePath, @status, @publishedDate, 0, 0, 0)";
 
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
@@ -158,6 +161,7 @@ namespace Facebook_Assistent.Services
                             FacebookPostId = reader["FacebookPostId"] as string,
                             LikesCount = Convert.ToInt32(reader["LikesCount"]),
                             CommentsCount = Convert.ToInt32(reader["CommentsCount"]),
+                            SharesCount = Convert.ToInt32(reader["SharesCount"]),
                             // Datum sicher parsen (falls null, dann null)
                             PublishedDate = reader["PublishedDate"] == DBNull.Value ? (DateTime?)null : DateTime.Parse(reader["PublishedDate"].ToString())
                         });
@@ -257,6 +261,24 @@ namespace Facebook_Assistent.Services
             }
         }
 
+        private static void EnsureColumnExists(SQLiteConnection conn, string tableName, string columnName, string columnDefinition)
+        {
+            string sql = $"PRAGMA table_info({tableName})";
+            using (var cmd = new SQLiteCommand(sql, conn))
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    if (string.Equals(reader["name"].ToString(), columnName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return;
+                    }
+                }
+            }
+
+            ExecuteCommand($"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnDefinition};", conn);
+        }
+
         // Hilfsmethode, um später einfach an die Verbindung zu kommen
         public static SQLiteConnection GetConnection()
         {
@@ -287,17 +309,18 @@ namespace Facebook_Assistent.Services
             }
         }
 
-        public static void UpdatePostStats(int localId, int likes, int comments)
+        public static void UpdatePostStats(int localId, int likes, int comments, int shares)
         {
             using (var conn = GetConnection())
             {
                 conn.Open();
-                string sql = "UPDATE Posts SET LikesCount = @likes, CommentsCount = @comments WHERE Id = @id";
+                string sql = "UPDATE Posts SET LikesCount = @likes, CommentsCount = @comments, SharesCount = @shares WHERE Id = @id";
 
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@likes", likes);
                     cmd.Parameters.AddWithValue("@comments", comments);
+                    cmd.Parameters.AddWithValue("@shares", shares);
                     cmd.Parameters.AddWithValue("@id", localId);
                     cmd.ExecuteNonQuery();
                 }
