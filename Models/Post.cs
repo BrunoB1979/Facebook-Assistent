@@ -21,6 +21,7 @@ namespace Facebook_Assistent.Models
         // Statistik
         public int LikesCount { get; set; }
         public int CommentsCount { get; set; }
+        public int SharesCount { get; set; }
 
         // Hilfseigenschaft für die Anzeige im DataGrid (Nicht in DB speichern)
         public string StatusText => Status == 1 ? "Veröffentlicht" : "Entwurf";

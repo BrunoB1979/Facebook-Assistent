@@ -127,7 +127,8 @@ namespace Facebook_Assistent
                     Status = 0, // Entwurf
                     PublishedDate = null,
                     LikesCount = 0,
-                    CommentsCount = 0
+                    CommentsCount = 0,
+                    SharesCount = 0
                 };
 
                 // C. Entscheiden: Neu anlegen oder Update?
@@ -589,13 +590,13 @@ namespace Facebook_Assistent
                     lblStatus.Text = $"Aktualisiere Post {processed} von {publishedPosts.Count}...";
 
                     // API Call
-                    var (likes, comments) = await FacebookApiService.GetPostStatistics(post.FacebookPostId, settings.AccessToken);
+                    var (likes, comments, shares) = await FacebookApiService.GetPostStatistics(post.FacebookPostId, settings.AccessToken);
 
                     // Wenn -1 zurückkommt, gab es einen Fehler (z.B. Post auf FB gelöscht), wir ignorieren das hier einfach
                     if (likes >= 0)
                     {
                         // DB Update
-                        DatabaseHelper.UpdatePostStats(post.Id, likes, comments);
+                        DatabaseHelper.UpdatePostStats(post.Id, likes, comments, shares);
                     }
                 }
 
@@ -625,10 +626,12 @@ namespace Facebook_Assistent
             // Summen berechnen
             int totalLikes = publishedPosts.Sum(p => p.LikesCount);
             int totalComments = publishedPosts.Sum(p => p.CommentsCount);
+            int totalShares = publishedPosts.Sum(p => p.SharesCount);
 
             // KPI Cards füllen
             lblTotalLikes.Text = totalLikes.ToString();
             lblTotalComments.Text = totalComments.ToString();
+            lblTotalShares.Text = totalShares.ToString();
 
             // Tabelle füllen
             gridStats.ItemsSource = publishedPosts;

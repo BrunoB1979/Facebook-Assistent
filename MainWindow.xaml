@@ -191,6 +191,12 @@
                                 <TextBlock x:Name="lblTotalComments" Text="0" FontSize="32" FontWeight="Bold" Foreground="#1877F2"/>
                             </StackPanel>
                         </Border>
+                        <Border Background="#E7F3FF" Width="200" Padding="15" CornerRadius="10" Margin="10">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="Total Geteilt" FontSize="14" Foreground="Gray"/>
+                                <TextBlock x:Name="lblTotalShares" Text="0" FontSize="32" FontWeight="Bold" Foreground="#1877F2"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
 
                     <Label Grid.Row="1" Content="Details veröffentlichter Beiträge:" FontWeight="Bold" VerticalAlignment="Top"/>
@@ -200,6 +206,7 @@
                             <DataGridTextColumn Header="Veröffentlicht am" Binding="{Binding PublishedDate}" Width="150"/>
                             <DataGridTextColumn Header="Likes" Binding="{Binding LikesCount}" Width="80"/>
                             <DataGridTextColumn Header="Kommentare" Binding="{Binding CommentsCount}" Width="100"/>
+                            <DataGridTextColumn Header="Geteilt" Binding="{Binding SharesCount}" Width="80"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
