@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Globalization;
 using System.Net.Http; // Für die Web-Anfrage
 using System.Threading.Tasks; // Für asynchrone Tasks (damit die App nicht einfriert)
 
@@ -147,7 +148,7 @@ namespace Facebook_Assistent.Services
         public static async Task<List<(string author, string message, DateTimeOffset createdTime)>> GetAllComments(string fbPostId, string accessToken)
         {
             var result = new List<(string author, string message, DateTimeOffset createdTime)>();
-            string nextUrl = $"https://graph.facebook.com/{fbPostId}/comments?fields=from{{name,id}},username,message,created_time&order=reverse_chronological&limit=100&access_token={accessToken}";
+            string nextUrl = $"https://graph.facebook.com/{fbPostId}/comments?fields=id,from{{name,id}},username,message,created_time&order=reverse_chronological&limit=100&access_token={accessToken}";
 
             while (!string.IsNullOrEmpty(nextUrl))
             {
@@ -172,6 +173,7 @@ namespace Facebook_Assistent.Services
                             comment["from"]?["name"]?.ToString() ??
                             comment["username"]?.ToString() ??
                             comment["from"]?["id"]?.ToString() ??
+                            comment["id"]?.ToString() ??
                             "Unbekannt";
 
                         string message = comment["message"]?.ToString() ?? "";
@@ -180,7 +182,11 @@ namespace Facebook_Assistent.Services
                         string createdTimeRaw = comment["created_time"]?.ToString();
                         if (!string.IsNullOrWhiteSpace(createdTimeRaw))
                         {
-                            DateTimeOffset.TryParse(createdTimeRaw, out createdTime);
+                            DateTimeOffset.TryParse(
+                                createdTimeRaw,
+                                CultureInfo.InvariantCulture,
+                                DateTimeStyles.AssumeUniversal,
+                                out createdTime);
                         }
 
                         result.Add((author, message, createdTime));
