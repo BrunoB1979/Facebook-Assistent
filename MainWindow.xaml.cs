@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq; // WICHTIG für das Filtern
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -22,6 +23,8 @@ namespace Facebook_Assistent
         // Merkt sich die ID des Posts, der gerade bearbeitet wird.
         // -1 bedeutet: Wir erstellen gerade einen komplett neuen Post.
         private int _editingPostId = -1;
+
+        private string _clipboardCommentsData = string.Empty;
 
         public MainWindow()
         {
@@ -613,6 +616,103 @@ namespace Facebook_Assistent
             {
                 btnRefreshStats.IsEnabled = true;
             }
+        }
+
+
+        private async void BtnLoadComments_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(gridStats.SelectedItem is Post selectedPost))
+            {
+                MessageBox.Show("Bitte wähle zuerst einen veröffentlichten Beitrag in der Statistik aus.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(selectedPost.FacebookPostId))
+            {
+                MessageBox.Show("Für diesen Beitrag ist keine Facebook-ID vorhanden.");
+                return;
+            }
+
+            var settings = DatabaseHelper.LoadSettings();
+            if (settings == null || string.IsNullOrWhiteSpace(settings.AccessToken))
+            {
+                MessageBox.Show("Keine Zugangsdaten gefunden.");
+                return;
+            }
+
+            btnLoadComments.IsEnabled = false;
+            lblStatus.Text = "Lade Kommentare von Facebook...";
+
+            try
+            {
+                var comments = await FacebookApiService.GetAllComments(selectedPost.FacebookPostId, settings.AccessToken);
+
+                lblCommentsHeadline.Text = selectedPost.Headline;
+                txtCommentsPostText.Text = selectedPost.FullText ?? string.Empty;
+
+                if (comments.Count == 0)
+                {
+                    txtCommentsList.Text = "Keine Kommentare vorhanden.";
+                }
+                else
+                {
+                    var lines = comments
+                        .Select((c, index) => $"{index + 1}. {c.author}: {c.message}")
+                        .ToList();
+                    txtCommentsList.Text = string.Join(Environment.NewLine + Environment.NewLine, lines);
+                }
+
+                _clipboardCommentsData = BuildCommentsClipboardText(selectedPost, comments);
+                tabComments.IsSelected = true;
+                lblStatus.Text = $"{comments.Count} Kommentare geladen.";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler beim Laden der Kommentare: {ex.Message}");
+                lblStatus.Text = "Kommentare konnten nicht geladen werden.";
+            }
+            finally
+            {
+                btnLoadComments.IsEnabled = true;
+            }
+        }
+
+        private void BtnCopyCommentsData_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(_clipboardCommentsData))
+            {
+                MessageBox.Show("Es sind noch keine Daten geladen. Bitte erst Kommentare laden.");
+                return;
+            }
+
+            Clipboard.SetText(_clipboardCommentsData);
+            lblStatus.Text = "Beitrag und Kommentare in Zwischenablage kopiert.";
+            MessageBox.Show("Daten wurden in die Zwischenablage kopiert.");
+        }
+
+        private string BuildCommentsClipboardText(Post post, List<(string author, string message)> comments)
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine($"Headline: {post.Headline}");
+            builder.AppendLine("Beitrag:");
+            builder.AppendLine(post.FullText ?? string.Empty);
+            builder.AppendLine();
+            builder.AppendLine("Kommentare:");
+
+            if (comments.Count == 0)
+            {
+                builder.AppendLine("(Keine Kommentare)");
+            }
+            else
+            {
+                for (int i = 0; i < comments.Count; i++)
+                {
+                    var c = comments[i];
+                    builder.AppendLine($"{i + 1}. {c.author}: {c.message}");
+                }
+            }
+
+            return builder.ToString();
         }
 
         // Hilfsmethode, um die UI-Elemente in Tab 4 zu füllen
