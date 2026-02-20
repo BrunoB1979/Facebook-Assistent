@@ -268,7 +268,33 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <Button x:Name="btnRefreshStats" Grid.Row="3" Content="🔄 Live-Daten von Facebook abrufen" Height="40" Margin="0,10,0,0" Click="btnRefreshStats_Click"/>
+                    <DockPanel Grid.Row="3" Margin="0,10,0,0" LastChildFill="False">
+                        <Button x:Name="btnLoadComments" Content="💬 Kommentare laden" Height="40" DockPanel.Dock="Right" Click="BtnLoadComments_Click"/>
+                        <Button x:Name="btnRefreshStats" Content="🔄 Live-Daten von Facebook abrufen" Height="40" DockPanel.Dock="Right" Click="btnRefreshStats_Click"/>
+                    </DockPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem x:Name="tabComments" Header="💬 Kommentare">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                        <TextBlock x:Name="lblCommentsTitle" Text="Noch kein Beitrag ausgewählt" FontSize="16" FontWeight="Bold"/>
+                        <TextBlock x:Name="lblCommentsCount" Text="0 Kommentare" Foreground="Gray"/>
+                    </StackPanel>
+
+                    <DataGrid x:Name="gridComments" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="45"/>
+                            <DataGridTextColumn Header="Autor" Binding="{Binding Author}" Width="180"/>
+                            <DataGridTextColumn Header="Zeitpunkt" Binding="{Binding CreatedDisplay}" Width="140"/>
+                            <DataGridTextColumn Header="Kommentar" Binding="{Binding Message}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
                 </Grid>
             </TabItem>
 

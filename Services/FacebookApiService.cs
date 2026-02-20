@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq; // Zum Lesen der Antwort
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http; // Für die Web-Anfrage
 using System.Threading.Tasks; // Für asynchrone Tasks (damit die App nicht einfriert)
@@ -9,6 +10,14 @@ namespace Facebook_Assistent.Services
     public static class FacebookApiService
     {
         private static readonly HttpClient client = new HttpClient();
+
+        public class FacebookComment
+        {
+            public string Id { get; set; }
+            public string AuthorName { get; set; }
+            public string Message { get; set; }
+            public DateTime? CreatedTime { get; set; }
+        }
 
         /// <summary>
         /// Testet die Verbindung zu Facebook.
@@ -145,6 +154,59 @@ namespace Facebook_Assistent.Services
             catch
             {
                 return (0, 0, 0); // Bei Fehler einfach 0 annehmen
+            }
+        }
+
+        public static async Task<List<FacebookComment>> GetPostComments(string fbPostId, string accessToken)
+        {
+            var comments = new List<FacebookComment>();
+            string nextUrl = $"https://graph.facebook.com/{fbPostId}/comments?fields=id,message,created_time,from&limit=100&access_token={accessToken}";
+
+            try
+            {
+                while (!string.IsNullOrWhiteSpace(nextUrl))
+                {
+                    HttpResponseMessage response = await client.GetAsync(nextUrl);
+                    string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var errorJson = JObject.Parse(jsonResponse);
+                        string fbError = errorJson["error"]?["message"]?.ToString() ?? "Kommentare konnten nicht geladen werden.";
+                        throw new Exception(fbError);
+                    }
+
+                    var data = JObject.Parse(jsonResponse);
+                    var commentArray = data["data"] as JArray;
+
+                    if (commentArray != null)
+                    {
+                        foreach (var item in commentArray)
+                        {
+                            DateTime? createdTime = null;
+                            if (DateTime.TryParse(item["created_time"]?.ToString(), out DateTime parsedTime))
+                            {
+                                createdTime = parsedTime;
+                            }
+
+                            comments.Add(new FacebookComment
+                            {
+                                Id = item["id"]?.ToString(),
+                                AuthorName = item["from"]?["name"]?.ToString() ?? "Unbekannt",
+                                Message = item["message"]?.ToString() ?? "",
+                                CreatedTime = createdTime
+                            });
+                        }
+                    }
+
+                    nextUrl = data["paging"]?["next"]?.ToString();
+                }
+
+                return comments;
+            }
+            catch (HttpRequestException)
+            {
+                throw new Exception("Netzwerkfehler beim Laden der Kommentare.");
             }
         }
     }

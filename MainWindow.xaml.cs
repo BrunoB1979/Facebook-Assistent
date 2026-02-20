@@ -36,6 +36,15 @@ namespace Facebook_Assistent
             public int EngagementScore { get; set; }
             public string InteractionsPerDay { get; set; }
             public int DaysOnline { get; set; }
+            public string FacebookPostId { get; set; }
+        }
+
+        private class CommentRow
+        {
+            public int Index { get; set; }
+            public string Author { get; set; }
+            public string CreatedDisplay { get; set; }
+            public string Message { get; set; }
         }
 
         public MainWindow()
@@ -570,6 +579,61 @@ namespace Facebook_Assistent
             }
         }
 
+        private async void BtnLoadComments_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(gridStats.SelectedItem is StatsPostRow selectedRow))
+            {
+                MessageBox.Show("Bitte wähle zuerst einen Beitrag in der Statistik aus.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(selectedRow.FacebookPostId))
+            {
+                MessageBox.Show("Der ausgewählte Beitrag hat keine Facebook-ID und kann nicht geladen werden.");
+                return;
+            }
+
+            try
+            {
+                btnLoadComments.IsEnabled = false;
+                lblStatus.Text = "Lade Kommentare...";
+
+                var settings = DatabaseHelper.LoadSettings();
+                if (settings == null || string.IsNullOrWhiteSpace(settings.AccessToken))
+                {
+                    MessageBox.Show("Bitte zuerst Access Token in den Einstellungen speichern.");
+                    return;
+                }
+
+                var comments = await FacebookApiService.GetPostComments(selectedRow.FacebookPostId, settings.AccessToken);
+
+                var rows = comments
+                    .Select((c, index) => new CommentRow
+                    {
+                        Index = index + 1,
+                        Author = c.AuthorName,
+                        Message = c.Message,
+                        CreatedDisplay = c.CreatedTime.HasValue ? c.CreatedTime.Value.ToString("dd.MM.yyyy HH:mm") : "-"
+                    })
+                    .ToList();
+
+                gridComments.ItemsSource = rows;
+                lblCommentsTitle.Text = $"Kommentare zu: {selectedRow.Headline}";
+                lblCommentsCount.Text = $"{rows.Count} Kommentare geladen";
+                tabComments.IsSelected = true;
+                lblStatus.Text = "Kommentare geladen.";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fehler beim Laden der Kommentare: {ex.Message}");
+                lblStatus.Text = "Fehler beim Laden der Kommentare.";
+            }
+            finally
+            {
+                btnLoadComments.IsEnabled = true;
+            }
+        }
+
         private async void btnRefreshStats_Click(object sender, RoutedEventArgs e)
         {
             // 1. Einstellungen & Verbindung prüfen
@@ -722,7 +786,8 @@ namespace Facebook_Assistent
                     Interactions = x.Interactions,
                     EngagementScore = x.Score,
                     InteractionsPerDay = x.InteractionsPerDay,
-                    DaysOnline = x.DaysOnline
+                    DaysOnline = x.DaysOnline,
+                    FacebookPostId = x.Post.FacebookPostId
                 })
                 .ToList();
 
