@@ -1,5 +1,7 @@
-﻿using Newtonsoft.Json.Linq; // Zum Lesen der Antwort
+﻿using Facebook_Assistent.Models;
+using Newtonsoft.Json.Linq; // Zum Lesen der Antwort
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http; // Für die Web-Anfrage
 using System.Threading.Tasks; // Für asynchrone Tasks (damit die App nicht einfriert)
@@ -140,6 +142,47 @@ namespace Facebook_Assistent.Services
             {
                 return (0, 0); // Bei Fehler einfach 0 annehmen
             }
+        }
+
+        public static async Task<List<FacebookComment>> GetPostComments(string fbPostId, string accessToken)
+        {
+            var comments = new List<FacebookComment>();
+            string nextUrl = $"https://graph.facebook.com/{fbPostId}/comments?fields=from{{name}},message,created_time&limit=100&access_token={accessToken}";
+
+            while (!string.IsNullOrEmpty(nextUrl))
+            {
+                HttpResponseMessage response = await client.GetAsync(nextUrl);
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorJson = JObject.Parse(jsonResponse);
+                    string fbError = errorJson["error"]?["message"]?.ToString() ?? "Kommentare konnten nicht geladen werden.";
+                    throw new Exception(fbError);
+                }
+
+                var data = JObject.Parse(jsonResponse);
+                var dataArray = data["data"] as JArray;
+
+                if (dataArray != null)
+                {
+                    foreach (var item in dataArray)
+                    {
+                        string message = item["message"]?.ToString() ?? "";
+
+                        comments.Add(new FacebookComment
+                        {
+                            AuthorName = item["from"]?["name"]?.ToString() ?? "Unbekannt",
+                            Message = string.IsNullOrWhiteSpace(message) ? "(Kein Text)" : message,
+                            CreatedAt = item["created_time"]?.ToString() ?? "-"
+                        });
+                    }
+                }
+
+                nextUrl = data["paging"]?["next"]?.ToString();
+            }
+
+            return comments;
         }
     }
 }

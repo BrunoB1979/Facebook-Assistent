@@ -194,7 +194,7 @@
                     </StackPanel>
 
                     <Label Grid.Row="1" Content="Details veröffentlichter Beiträge:" FontWeight="Bold" VerticalAlignment="Top"/>
-                    <DataGrid x:Name="gridStats" Grid.Row="1" Margin="0,30,0,0" AutoGenerateColumns="False" IsReadOnly="True">
+                    <DataGrid x:Name="gridStats" Grid.Row="1" Margin="0,30,0,0" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Headline" Binding="{Binding Headline}" Width="*"/>
                             <DataGridTextColumn Header="Veröffentlicht am" Binding="{Binding PublishedDate}" Width="150"/>
@@ -203,7 +203,33 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <Button x:Name="btnRefreshStats" Grid.Row="2" Content="🔄 Live-Daten von Facebook abrufen" Height="40" Margin="0,10" Click="btnRefreshStats_Click"/>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                        <Button x:Name="btnLoadComments" Content="💬 Kommentare laden" Height="40" Width="170" Click="BtnLoadComments_Click"/>
+                        <Button x:Name="btnRefreshStats" Content="🔄 Live-Daten von Facebook abrufen" Height="40" Click="btnRefreshStats_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem x:Name="tabComments" Header="🧾 Beitrag + Kommentare">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Ausgewählter Beitrag" FontWeight="Bold" FontSize="14"/>
+                    <TextBox x:Name="txtSelectedPostText" Grid.Row="0" Margin="0,25,0,10" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" Height="120" VerticalScrollBarVisibility="Auto"/>
+
+                    <DataGrid x:Name="gridComments" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Autor" Binding="{Binding AuthorName}" Width="160"/>
+                            <DataGridTextColumn Header="Zeitpunkt" Binding="{Binding CreatedAt}" Width="180"/>
+                            <DataGridTextColumn Header="Kommentar" Binding="{Binding Message}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Button x:Name="btnCopyCommentData" Grid.Row="2" Content="📋 Beitrag + Kommentare kopieren" HorizontalAlignment="Right" Margin="0,10,0,0" Click="BtnCopyCommentData_Click"/>
                 </Grid>
             </TabItem>
 

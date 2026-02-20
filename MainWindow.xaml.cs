@@ -23,6 +23,9 @@ namespace Facebook_Assistent
         // -1 bedeutet: Wir erstellen gerade einen komplett neuen Post.
         private int _editingPostId = -1;
 
+        private Post _selectedStatsPost;
+        private List<FacebookComment> _loadedComments = new List<FacebookComment>();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -208,6 +211,10 @@ namespace Facebook_Assistent
                 else if (tabStats.IsSelected) // Jetzt kennt er "tabStats"
                 {
                     UpdateStatisticsUI(); // Lädt die lokalen Daten in die Anzeige
+                }
+                else if (tabComments.IsSelected)
+                {
+                    RefreshCommentsTab();
                 }
             }
         }
@@ -613,6 +620,84 @@ namespace Facebook_Assistent
             {
                 btnRefreshStats.IsEnabled = true;
             }
+        }
+
+        private async void BtnLoadComments_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(gridStats.SelectedItem is Post selectedPost))
+            {
+                MessageBox.Show("Bitte wähle zuerst einen Beitrag in der Statistik aus.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(selectedPost.FacebookPostId))
+            {
+                MessageBox.Show("Dieser Beitrag hat keine Facebook-ID.");
+                return;
+            }
+
+            var settings = DatabaseHelper.LoadSettings();
+            if (settings == null || string.IsNullOrWhiteSpace(settings.AccessToken))
+            {
+                MessageBox.Show("Keine gültigen Zugangsdaten gefunden.");
+                return;
+            }
+
+            btnLoadComments.IsEnabled = false;
+            lblStatus.Text = "Lade Kommentare von Facebook...";
+
+            try
+            {
+                _selectedStatsPost = selectedPost;
+                _loadedComments = await FacebookApiService.GetPostComments(selectedPost.FacebookPostId, settings.AccessToken);
+
+                RefreshCommentsTab();
+                tabComments.IsSelected = true;
+                lblStatus.Text = $"{_loadedComments.Count} Kommentare geladen.";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Kommentare konnten nicht geladen werden:\n{ex.Message}");
+                lblStatus.Text = "Fehler beim Laden der Kommentare.";
+            }
+            finally
+            {
+                btnLoadComments.IsEnabled = true;
+            }
+        }
+
+        private void BtnCopyCommentData_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedStatsPost == null)
+            {
+                MessageBox.Show("Es sind noch keine Kommentar-Daten geladen.");
+                return;
+            }
+
+            string commentsText = _loadedComments.Count == 0
+                ? "(Keine Kommentare gefunden)"
+                : string.Join(Environment.NewLine + Environment.NewLine,
+                    _loadedComments.Select((comment, index) =>
+                        $"{index + 1}. {comment.AuthorName} ({comment.CreatedAt}){Environment.NewLine}{comment.Message}"));
+
+            string content =
+                $"Beitrag: {_selectedStatsPost.Headline}{Environment.NewLine}" +
+                $"Facebook-ID: {_selectedStatsPost.FacebookPostId}{Environment.NewLine}" +
+                $"Veröffentlicht am: {_selectedStatsPost.PublishedDate:g}{Environment.NewLine}{Environment.NewLine}" +
+                "Post-Text:" + Environment.NewLine +
+                (_selectedStatsPost.FullText ?? "") + Environment.NewLine + Environment.NewLine +
+                "Kommentare:" + Environment.NewLine + commentsText;
+
+            Clipboard.SetText(content);
+            lblStatus.Text = "Beitrag + Kommentare in die Zwischenablage kopiert.";
+            MessageBox.Show("Daten wurden in die Zwischenablage kopiert.");
+        }
+
+        private void RefreshCommentsTab()
+        {
+            txtSelectedPostText.Text = _selectedStatsPost?.FullText ?? "Noch kein Beitrag ausgewählt.";
+            gridComments.ItemsSource = null;
+            gridComments.ItemsSource = _loadedComments;
         }
 
         // Hilfsmethode, um die UI-Elemente in Tab 4 zu füllen
