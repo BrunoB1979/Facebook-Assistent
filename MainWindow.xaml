@@ -29,7 +29,7 @@
             <RowDefinition Height="30"/>
         </Grid.RowDefinitions>
 
-        <TabControl Grid.Row="0" Margin="10" SelectionChanged="TabControl_SelectionChanged">
+        <TabControl x:Name="mainTabs" Grid.Row="0" Margin="10" SelectionChanged="TabControl_SelectionChanged">
             <TabItem Header="⚙️ Einstellungen">
                 <Grid Margin="20">
                     <Grid.ColumnDefinitions>
@@ -91,35 +91,24 @@
                         <StackPanel Grid.Row="3" Orientation="Vertical" Margin="0,5,0,10">
                             <Label Content="Bildquelle auswählen:" Padding="0,5"/>
                             <DockPanel>
-                                <Button x:Name="btnSelectImage" Content="Datei wählen..." Width="100" DockPanel.Dock="Right" Margin="5,0,0,0" 
-        Click="BtnSelectImage_Click"/>
+                                <Button x:Name="btnSelectImage" Content="Datei wählen..." Width="100" DockPanel.Dock="Right" Margin="5,0,0,0" Click="BtnSelectImage_Click"/>
                                 <TextBox x:Name="txtImagePath" IsReadOnly="True" Background="#EEEEEE" Text="Kein Bild ausgewählt." VerticalContentAlignment="Center"/>
                             </DockPanel>
                         </StackPanel>
 
                         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button x:Name="btnClearEditor" Content="Neu / Leeren" 
-        Click="BtnClearEditor_Click"/>
-                            <Button x:Name="btnSavePost" Content="Als Entwurf speichern" FontWeight="Bold" Background="#DDDDDD" 
-        Click="BtnSavePost_Click" 
-        IsEnabled="False"/>
+                            <Button x:Name="btnClearEditor" Content="Neu / Leeren" Click="BtnClearEditor_Click"/>
+                            <Button x:Name="btnSavePost" Content="Als Entwurf speichern" FontWeight="Bold" Background="#DDDDDD" Click="BtnSavePost_Click" IsEnabled="False"/>
                         </StackPanel>
                     </Grid>
 
-                    <Border Grid.Column="1" BorderBrush="#CCCCCC" BorderThickness="1" CornerRadius="5" Background="White" Padding="15">
+                    <Border Grid.Column="1" BorderBrush="#CCCCCC" BorderThickness="1" Padding="10" Background="White" CornerRadius="8">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
-                                <Label Content="Vorschau (So könnte es aussehen):" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                <TextBlock Text="Vorschau" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
 
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                    <Ellipse Width="40" Height="40" Fill="#1877F2"/>
-                                    <StackPanel Margin="10,0">
-                                        <TextBlock Text="Deine Seite" FontWeight="Bold"/>
-                                        <TextBlock Text="Gerade eben · 🌎" Foreground="Gray" FontSize="11"/>
-                                    </StackPanel>
-                                </StackPanel>
+                                <TextBlock x:Name="lblPreviewHeadline" Text="Deine Headline..." FontSize="24" FontWeight="Bold" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
-                                <TextBlock x:Name="lblPreviewHeadline" Text="Headline..." FontWeight="Bold" FontSize="16" Margin="0,5" TextWrapping="Wrap"/>
                                 <TextBlock x:Name="lblPreviewText" Text="Hier erscheint dein Text..." TextWrapping="Wrap" Margin="0,0,0,10"/>
 
                                 <Image x:Name="imgPreview" MaxHeight="400" Stretch="Uniform" HorizontalAlignment="Center" />
@@ -194,7 +183,7 @@
                     </StackPanel>
 
                     <Label Grid.Row="1" Content="Details veröffentlichter Beiträge:" FontWeight="Bold" VerticalAlignment="Top"/>
-                    <DataGrid x:Name="gridStats" Grid.Row="1" Margin="0,30,0,0" AutoGenerateColumns="False" IsReadOnly="True">
+                    <DataGrid x:Name="gridStats" Grid.Row="1" Margin="0,30,0,0" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Headline" Binding="{Binding Headline}" Width="*"/>
                             <DataGridTextColumn Header="Veröffentlicht am" Binding="{Binding PublishedDate}" Width="150"/>
@@ -203,7 +192,38 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <Button x:Name="btnRefreshStats" Grid.Row="2" Content="🔄 Live-Daten von Facebook abrufen" Height="40" Margin="0,10" Click="btnRefreshStats_Click"/>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="btnRefreshStats" Content="🔄 Live-Daten von Facebook abrufen" Height="40" Margin="0,10" Click="btnRefreshStats_Click"/>
+                        <Button x:Name="btnLoadComments" Content="💬 Kommentare laden" Height="40" Margin="0,10" Click="BtnLoadComments_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem x:Name="tabComments" Header="🧾 Beitrag + Kommentare">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock x:Name="txtCommentsInfo" Text="Bitte im Statistik-Tab einen Beitrag auswählen und Kommentare laden." FontWeight="SemiBold"/>
+
+                    <TextBox x:Name="txtPostAndComments"
+                             Grid.Row="1"
+                             Margin="0,10,0,10"
+                             IsReadOnly="True"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"/>
+
+                    <Button x:Name="btnCopyPostAndComments"
+                            Grid.Row="2"
+                            HorizontalAlignment="Right"
+                            Content="📋 Beitrag + Kommentare kopieren"
+                            Click="BtnCopyPostAndComments_Click"
+                            IsEnabled="False"/>
                 </Grid>
             </TabItem>
 

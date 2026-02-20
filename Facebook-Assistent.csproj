@@ -83,6 +83,7 @@
   <ItemGroup>
     <Compile Include="Models\FacebookSettings.cs" />
     <Compile Include="Models\Post.cs" />
+    <Compile Include="Models\PostComment.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

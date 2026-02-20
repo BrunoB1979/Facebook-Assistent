@@ -6,6 +6,7 @@ using System.Threading.Tasks; // Für asynchrone Tasks (damit die App nicht einf
 
 namespace Facebook_Assistent.Services
 {
+    using Facebook_Assistent.Models;
     public static class FacebookApiService
     {
         private static readonly HttpClient client = new HttpClient();
@@ -101,6 +102,52 @@ namespace Facebook_Assistent.Services
             {
                 throw new Exception("Netzwerkfehler. Bitte Internetverbindung prüfen.");
             }
+        }
+
+
+
+        public static async Task<System.Collections.Generic.List<PostComment>> GetPostComments(string fbPostId, string accessToken)
+        {
+            var comments = new System.Collections.Generic.List<PostComment>();
+            string nextUrl = $"https://graph.facebook.com/{fbPostId}/comments?fields=from,message,created_time&limit=100&access_token={accessToken}";
+
+            try
+            {
+                while (!string.IsNullOrWhiteSpace(nextUrl))
+                {
+                    HttpResponseMessage response = await client.GetAsync(nextUrl);
+                    string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception("Kommentare konnten nicht von Facebook geladen werden.");
+                    }
+
+                    var data = JObject.Parse(jsonResponse);
+                    var entries = data["data"] as JArray;
+
+                    if (entries != null)
+                    {
+                        foreach (var entry in entries)
+                        {
+                            comments.Add(new PostComment
+                            {
+                                AuthorName = entry["from"]?["name"]?.ToString() ?? "Unbekannt",
+                                Message = entry["message"]?.ToString() ?? "(ohne Text)",
+                                CreatedTime = entry["created_time"]?.ToString() ?? ""
+                            });
+                        }
+                    }
+
+                    nextUrl = data["paging"]?["next"]?.ToString();
+                }
+            }
+            catch (HttpRequestException)
+            {
+                throw new Exception("Netzwerkfehler beim Laden der Kommentare.");
+            }
+
+            return comments;
         }
 
         public static async Task<(int likes, int comments)> GetPostStatistics(string fbPostId, string accessToken)
