@@ -54,8 +54,15 @@ namespace Facebook_Assistent.Services
                     // 5. Erfolg: ID zurückgeben
                     var data = JObject.Parse(jsonResponse);
 
-                    // Facebook gibt oft "id" und "post_id" zurück. Wir nehmen die ID.
-                    return data["id"].ToString();
+                    // Bei Foto-Uploads ist "post_id" die richtige ID für spätere Post-Statistiken.
+                    // Fallback auf "id", falls die API kein "post_id" liefert.
+                    string postIdentifier = data["post_id"]?.ToString() ?? data["id"]?.ToString();
+                    if (string.IsNullOrWhiteSpace(postIdentifier))
+                    {
+                        throw new Exception("Facebook hat keine Post-ID zurückgegeben.");
+                    }
+
+                    return postIdentifier;
                 }
             }
             catch (HttpRequestException)
@@ -105,8 +112,9 @@ namespace Facebook_Assistent.Services
 
         public static async Task<(int likes, int comments)> GetPostStatistics(string fbPostId, string accessToken)
         {
-            // Wir nutzen "summary(true)", um die Gesamtzahl zu bekommen
-            string url = $"https://graph.facebook.com/{fbPostId}?fields=likes.summary(true),comments.summary(true)&access_token={accessToken}";
+            // Wir nutzen summary(true), um die Gesamtzahl zu bekommen.
+            // "reactions" deckt moderne Reaktionstypen ab, nicht nur klassische Likes.
+            string url = $"https://graph.facebook.com/{fbPostId}?fields=reactions.summary(true),likes.summary(true),comments.summary(true)&access_token={accessToken}";
 
             try
             {
@@ -121,9 +129,13 @@ namespace Facebook_Assistent.Services
 
                 var data = JObject.Parse(jsonResponse);
 
-                // Sicher navigieren: data["likes"]["summary"]["total_count"]
+                // Erst reactions verwenden, sonst auf likes zurückfallen.
                 int likes = 0;
-                if (data["likes"] != null && data["likes"]["summary"] != null)
+                if (data["reactions"] != null && data["reactions"]["summary"] != null)
+                {
+                    likes = (int)data["reactions"]["summary"]["total_count"];
+                }
+                else if (data["likes"] != null && data["likes"]["summary"] != null)
                 {
                     likes = (int)data["likes"]["summary"]["total_count"];
                 }
@@ -138,7 +150,8 @@ namespace Facebook_Assistent.Services
             }
             catch
             {
-                return (0, 0); // Bei Fehler einfach 0 annehmen
+                // Fehler nicht als harte 0-Statistik speichern, damit bestehende Werte erhalten bleiben.
+                return (-1, -1);
             }
         }
     }
